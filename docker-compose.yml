@@ -1,0 +1,101 @@
+services:
+  postgres:
+    image: postgres:15
+    container_name: postgres
+    environment:
+      POSTGRES_USER: ubuntu
+      POSTGRES_PASSWORD: android
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+
+  kafka-chat:
+    image: confluentinc/cp-kafka:latest
+    container_name: kafka-chat
+    environment:
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@localhost:9093
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092,CONTROLLER://0.0.0.0:9093
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,CONTROLLER:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_LOG_DIRS: /var/lib/kafka/data
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_MIN_INSYNC_REPLICAS: 1
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: 'true'
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+    volumes:
+      - ./data/kafka:/var/lib/kafka/data
+    ports:
+      - "9092:9092"
+      - "9093:9093"
+    command:
+      - sh
+      - -c
+      - |
+        if [ ! -f /var/lib/kafka/data/meta.properties ]; then
+          CLUSTER_ID=$(/usr/bin/kafka-storage random-uuid)
+          /usr/bin/kafka-storage format --ignore-formatted --cluster-id $CLUSTER_ID --config /etc/kafka/kraft/server.properties
+        fi
+        /etc/confluent/docker/run  # Start the Kafka broker
+    
+  app1:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: my-aspnet-app:latest
+    container_name: aspnetcoreapp1
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ConnectionStrings__DefaultConnection: Host=postgres;Port=5432;Database=mydatabase1;Username=ubuntu;Password=android;
+      ConnectionStrings__Hangfire: Host=postgres;Port=5432;Database=Hangfire1;Username=ubuntu;Password=android;Pooling=true;MinPoolSize=0;MaxPoolSize=5;ConnectionLifetime=0;
+      Kafka__BootstrapServers: kafka-chat:9092
+    ports:
+      - "5000:8080"
+    depends_on:
+      - postgres
+      - kafka-chat
+
+  app2:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: my-aspnet-app:latest
+    container_name: aspnetcoreapp2
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ConnectionStrings__DefaultConnection: Host=postgres;Port=5432;Database=mydatabase2;Username=ubuntu;Password=android;
+      ConnectionStrings__Hangfire: Host=postgres;Port=5432;Database=Hangfire2;Username=ubuntu;Password=android;Pooling=true;MinPoolSize=0;MaxPoolSize=5;ConnectionLifetime=0;
+      Kafka__BootstrapServers: kafka-chat:9092
+    ports:
+      - "6000:8080"
+    depends_on:
+      - postgres
+      - kafka-chat
+      
+      
+  app3:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: my-aspnet-app:latest
+    container_name: aspnetcoreapp3
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ConnectionStrings__DefaultConnection: Host=postgres;Port=5432;Database=mydatabase3;Username=ubuntu;Password=android;
+      ConnectionStrings__Hangfire: Host=postgres;Port=5432;Database=Hangfire3;Username=ubuntu;Password=android;Pooling=true;MinPoolSize=0;MaxPoolSize=5;ConnectionLifetime=0;
+      Kafka__BootstrapServers: kafka-chat:9092
+    ports:
+      - "7000:8080"
+    depends_on:
+      - postgres
+      - kafka-chat
+
+volumes:
+  postgres-data:
+  kafka-data:
