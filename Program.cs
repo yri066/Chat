@@ -1,3 +1,5 @@
+using Chat.Services.Kafka;
+
 namespace Chat
 {
     public class Program
@@ -5,6 +7,9 @@ namespace Chat
         public static void Main(string[] args)
         {
             var builder = WebApplication.CreateBuilder(args);
+
+            builder.Services.Configure<KafkaConfig>(builder.Configuration.GetSection(KafkaConfig.Position));
+
 
             builder.Services.AddControllers();
             builder.Services.AddEndpointsApiExplorer();
