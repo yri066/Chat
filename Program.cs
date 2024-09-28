@@ -9,7 +9,7 @@ namespace Chat
             var builder = WebApplication.CreateBuilder(args);
 
             builder.Services.Configure<KafkaConfig>(builder.Configuration.GetSection(KafkaConfig.Position));
-
+            builder.Services.AddSingleton<IProducer, Producer>();
 
             builder.Services.AddControllers();
             builder.Services.AddEndpointsApiExplorer();
