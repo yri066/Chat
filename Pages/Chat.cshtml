@@ -1,0 +1,108 @@
+﻿@page "/{chatId}"
+@model Chat.Pages.ChatModel
+@{
+}
+
+<style>
+    .chat-container {
+        display: flex;
+        flex-direction: column;
+        flex-grow: 1;
+        height: 80vh;
+    }
+
+    #messageList {
+        flex-grow: 1;
+        overflow-y: auto;
+        border: 1px solid #000;
+        margin-bottom: 10px;
+    }
+
+    .input-area {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .input-area input, .input-area button {
+        width: 100%;
+    }
+
+    .slider-container {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+
+    .slider-label {
+        margin-left: 10px;
+    }
+</style>
+
+<div class="container-fluid chat-container">
+
+    <!-- Область сообщений чата -->
+    <div id="messageList" class="p-3">
+    </div>
+
+    <div class="input-area">
+        <!-- Поле ввода для сообщения, кнопка отправки и задержка отправки -->
+        <div class="input-group mb-3">
+            <input type="text" id="messageInput" class="form-control" placeholder="Enter your message..." />
+            <button id="sendButton" class="btn btn-primary">Отправить</button>
+        </div>
+        <div class="slider-container mb-3">
+            <input type="range" class="form-range" id="valueSlider" min="0" max="1000" step="10" value="0">
+            <span id="sliderValue" class="slider-label">Отправить сразу</span>
+        </div>
+    </div>
+</div>
+
+<script src="~/js/microsoft/signalr/dist/browser/signalr.js"></script>
+<script>
+
+    const connection = new signalR.HubConnectionBuilder()
+        .withUrl(document.location.origin + "/chat")
+        .build();
+
+    // Подключение
+    connection.start().then(() => {
+        console.log("Connected to SignalR");
+
+        // Присоединение к группе
+        connection.invoke("JoinChat", "@Model.ChatId").catch(err => console.error(err.toString()));
+    }).catch(err => console.error(err.toString()));
+
+    // Обработка сообщений, полученных от сервера
+    connection.on("ReceiveMessage", (user, message) => {
+        const messageList = document.getElementById("messageList");
+
+        // Создать новый элемент сообщения
+        const msgElement = document.createElement("div");
+        msgElement.classList.add("border-bottom", "p-2");
+        msgElement.innerHTML = `<strong>${user}:</strong> ${message}`;
+        messageList.appendChild(msgElement);
+
+        // Прокрутите список в самый низ
+        messageList.scrollTop = messageList.scrollHeight;
+    });
+
+    // Обработка нажатия на кнопку "Отправить"
+    document.getElementById("sendButton").onclick = function () {
+        var userId = "@Model.ChatId";
+        var message = document.getElementById("messageInput").value.trim();
+        if (message) {
+            connection.invoke("SendMessage", userId, message).catch(err => console.error(err.toString()));
+            document.getElementById("messageInput").value = "";
+        }
+    };
+
+    document.getElementById("valueSlider").addEventListener("input", function () {
+        if (this.value == 0) {
+            document.getElementById("sliderValue").innerText = `Отправить сразу`;
+        }
+        else {
+            document.getElementById("sliderValue").innerText = `Отправить через ${this.value} с.`;
+        }
+    });
+
+</script>
