@@ -11,6 +11,7 @@ namespace Chat
 
             builder.Services.Configure<KafkaConfig>(builder.Configuration.GetSection(KafkaConfig.Position));
             builder.Services.Configure<ChatConfig>(builder.Configuration.GetSection(ChatConfig.Position));
+            builder.Services.AddSignalR();
 
             builder.Services.AddSingleton<IProducer, Producer>();
             builder.Services.AddHostedService<ConsumerHostedService>();
@@ -42,6 +43,8 @@ namespace Chat
             app.UseStaticFiles();
 
             app.UseRouting();
+
+            app.MapHub<ChatHub>("/Chat");
 
             app.UseAuthorization();
 
