@@ -10,6 +10,7 @@ namespace Chat
 
             builder.Services.Configure<KafkaConfig>(builder.Configuration.GetSection(KafkaConfig.Position));
             builder.Services.AddSingleton<IProducer, Producer>();
+            builder.Services.AddHostedService<ConsumerHostedService>();
 
             builder.Services.AddControllers();
             builder.Services.AddEndpointsApiExplorer();
