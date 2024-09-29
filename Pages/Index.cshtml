@@ -8,3 +8,19 @@
     <h1 class="display-4">Welcome</h1>
     <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
 </div>
+
+<div class="container mt-4">
+    <h2>List of Pages</h2>
+    <ul class="list-group">
+        @foreach (var item in Model.ChatList)
+        {
+            <a asp-page="/Chat" asp-route-chatId="@item" class="text-decoration-none" target="_blank">
+                <div class="card mb-3">
+                    <div class="card-body">
+                        @item
+                    </div>
+                </div>
+            </a>
+        }
+    </ul>
+</div>
