@@ -1,3 +1,4 @@
+using Chat.Services.Hubs;
 using Chat.Services.Kafka;
 
 namespace Chat
@@ -9,6 +10,8 @@ namespace Chat
             var builder = WebApplication.CreateBuilder(args);
 
             builder.Services.Configure<KafkaConfig>(builder.Configuration.GetSection(KafkaConfig.Position));
+            builder.Services.Configure<ChatConfig>(builder.Configuration.GetSection(ChatConfig.Position));
+
             builder.Services.AddSingleton<IProducer, Producer>();
             builder.Services.AddHostedService<ConsumerHostedService>();
 
