@@ -14,11 +14,12 @@ services:
     image: confluentinc/cp-kafka:latest
     container_name: kafka-chat
     environment:
+      KAFKA_KRAFT_MODE: 'true'
       KAFKA_NODE_ID: 1
       KAFKA_PROCESS_ROLES: broker,controller
       KAFKA_CONTROLLER_QUORUM_VOTERS: 1@localhost:9093
       KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092,CONTROLLER://0.0.0.0:9093
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka-chat:9092
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,CONTROLLER:PLAINTEXT
       KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
       KAFKA_LOG_DIRS: /var/lib/kafka/data
@@ -38,12 +39,14 @@ services:
       - sh
       - -c
       - |
-        if [ ! -f /var/lib/kafka/data/meta.properties ]; then
-          CLUSTER_ID=$(/usr/bin/kafka-storage random-uuid)
-          /usr/bin/kafka-storage format --ignore-formatted --cluster-id $CLUSTER_ID --config /etc/kafka/kraft/server.properties
+        if [ -f /var/lib/kafka/data/meta.properties ];
+        then
+          rm /var/lib/kafka/data/meta.properties
         fi
+        CLUSTER_ID=$(/usr/bin/kafka-storage random-uuid)
+        /usr/bin/kafka-storage format --ignore-formatted --cluster-id $CLUSTER_ID --config /etc/kafka/kraft/server.properties
         /etc/confluent/docker/run  # Start the Kafka broker
-    
+
   app1:
     build:
       context: .
@@ -54,7 +57,12 @@ services:
       ASPNETCORE_ENVIRONMENT: Development
       ConnectionStrings__DefaultConnection: Host=postgres;Port=5432;Database=mydatabase1;Username=ubuntu;Password=android;
       ConnectionStrings__Hangfire: Host=postgres;Port=5432;Database=Hangfire1;Username=ubuntu;Password=android;Pooling=true;MinPoolSize=0;MaxPoolSize=5;ConnectionLifetime=0;
+      Chat__ClietnId: client1
+      Chat__PublicChatId: all
+      Chat__ChatCount: 3
       Kafka__BootstrapServers: kafka-chat:9092
+      Kafka__Topic: chat-topic
+      Kafka__ConsumerGroupId: group1
     ports:
       - "5000:8080"
     depends_on:
@@ -71,13 +79,17 @@ services:
       ASPNETCORE_ENVIRONMENT: Development
       ConnectionStrings__DefaultConnection: Host=postgres;Port=5432;Database=mydatabase2;Username=ubuntu;Password=android;
       ConnectionStrings__Hangfire: Host=postgres;Port=5432;Database=Hangfire2;Username=ubuntu;Password=android;Pooling=true;MinPoolSize=0;MaxPoolSize=5;ConnectionLifetime=0;
+      Chat__ClietnId: client2
+      Chat__PublicChatId: all
+      Chat__ChatCount: 3
       Kafka__BootstrapServers: kafka-chat:9092
+      Kafka__Topic: chat-topic
+      Kafka__ConsumerGroupId: group2
     ports:
       - "6000:8080"
     depends_on:
       - postgres
       - kafka-chat
-      
       
   app3:
     build:
@@ -89,7 +101,12 @@ services:
       ASPNETCORE_ENVIRONMENT: Development
       ConnectionStrings__DefaultConnection: Host=postgres;Port=5432;Database=mydatabase3;Username=ubuntu;Password=android;
       ConnectionStrings__Hangfire: Host=postgres;Port=5432;Database=Hangfire3;Username=ubuntu;Password=android;Pooling=true;MinPoolSize=0;MaxPoolSize=5;ConnectionLifetime=0;
+      Chat__ClietnId: client3
+      Chat__PublicChatId: all
+      Chat__ChatCount: 3
       Kafka__BootstrapServers: kafka-chat:9092
+      Kafka__Topic: chat-topic
+      Kafka__ConsumerGroupId: group3
     ports:
       - "7000:8080"
     depends_on:
@@ -98,4 +115,3 @@ services:
 
 volumes:
   postgres-data:
-  kafka-data:
