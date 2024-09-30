@@ -8,5 +8,10 @@ namespace Chat
             : base(options) { }
 
         public DbSet<Message> Messages { get; set; }
+
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            modelBuilder.Entity<Message>().ToTable("Message");
+        }
     }
 }

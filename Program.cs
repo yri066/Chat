@@ -21,6 +21,8 @@ namespace Chat
             builder.Services.AddDbContext<ApplicationDbContext>(options =>
                 options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 
+            AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
+
             builder.Services.AddHangfire(h =>
             {
                 h.UsePostgreSqlStorage(conf =>
@@ -60,12 +62,18 @@ namespace Chat
             // Add services to the container.
             builder.Services.AddRazorPages();
 
+            var app = builder.Build();
+
             using (var connect = new HangfireDbContext(builder.Configuration.GetConnectionString("Hangfire")))
             {
                 connect.Database.EnsureCreated();
             }
 
-            var app = builder.Build();
+            using (var scope = app.Services.CreateScope())
+            {
+                var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+                db.Database.Migrate();
+            }
 
             if (app.Environment.IsDevelopment())
             {
