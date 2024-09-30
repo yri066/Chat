@@ -11,7 +11,7 @@
 *.sln.docstates
 
 # User-specific directory
-data/
+kafka/
 
 # User-specific files (MonoDevelop/Xamarin Studio)
 *.userprefs

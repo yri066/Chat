@@ -31,7 +31,7 @@ services:
       KAFKA_AUTO_CREATE_TOPICS_ENABLE: 'true'
       KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
     volumes:
-      - ./data/kafka:/var/lib/kafka/data
+      - ./kafka:/var/lib/kafka/data
     ports:
       - "9092:9092"
       - "9093:9093"
@@ -64,7 +64,7 @@ services:
       Kafka__Topic: chat-topic
       Kafka__ConsumerGroupId: group1
     ports:
-      - "5000:8080"
+      - "7000:8080"
     depends_on:
       - postgres
       - kafka-chat
@@ -86,7 +86,7 @@ services:
       Kafka__Topic: chat-topic
       Kafka__ConsumerGroupId: group2
     ports:
-      - "6000:8080"
+      - "8000:8080"
     depends_on:
       - postgres
       - kafka-chat
@@ -108,7 +108,7 @@ services:
       Kafka__Topic: chat-topic
       Kafka__ConsumerGroupId: group3
     ports:
-      - "7000:8080"
+      - "9000:8080"
     depends_on:
       - postgres
       - kafka-chat

@@ -1,6 +1,9 @@
+using Chat.Data;
 using Chat.Services;
 using Chat.Services.Hubs;
 using Chat.Services.Kafka;
+using Hangfire;
+using Hangfire.PostgreSql;
 
 namespace Chat
 {
@@ -13,6 +16,18 @@ namespace Chat
             builder.Services.Configure<KafkaConfig>(builder.Configuration.GetSection(KafkaConfig.Position));
             builder.Services.Configure<ChatConfig>(builder.Configuration.GetSection(ChatConfig.Position));
             builder.Services.AddSignalR();
+
+            builder.Services.AddHangfire(h =>
+            {
+                h.UsePostgreSqlStorage(conf =>
+                conf.UseNpgsqlConnection(builder.Configuration.GetConnectionString("Hangfire")));
+            });
+            builder.Services.AddHangfireServer(options =>
+            {
+                options.WorkerCount = 5;
+                options.SchedulePollingInterval = TimeSpan.FromSeconds(1);
+            });
+            builder.Services.AddHangfireServer();
 
             builder.Services.AddSingleton<IProducer, Producer>();
             builder.Services.AddSingleton<SignalRMessageObserver>();
@@ -38,6 +53,11 @@ namespace Chat
             // Add services to the container.
             builder.Services.AddRazorPages();
 
+            using (var connect = new HangfireDbContext(builder.Configuration.GetConnectionString("Hangfire")))
+            {
+                connect.Database.EnsureCreated();
+            }
+
             var app = builder.Build();
 
             if (app.Environment.IsDevelopment())
@@ -59,6 +79,7 @@ namespace Chat
 
             app.UseRouting();
 
+            app.UseHangfireDashboard("/Hang");
             app.MapHub<ChatHub>("/Chat");
 
             app.UseAuthorization();
