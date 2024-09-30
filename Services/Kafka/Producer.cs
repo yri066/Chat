@@ -1,5 +1,6 @@
 ﻿using Confluent.Kafka;
 using Microsoft.Extensions.Options;
+using System.Text.Json;
 
 namespace Chat.Services.Kafka
 {
@@ -13,7 +14,7 @@ namespace Chat.Services.Kafka
             _logger = logger;
         }
 
-        public async Task SendMessage(string message)
+        public async Task SendMessage(Message message)
         {
             var config = new ProducerConfig
             {
@@ -22,9 +23,11 @@ namespace Chat.Services.Kafka
 
             using (var producer = new ProducerBuilder<Null, string>(config).Build())
             {
+                var messageJson = JsonSerializer.Serialize(message);
+
                 try
                 {
-                    await producer.ProduceAsync(_config.Topic, new Message<Null, string> { Value = message });
+                    await producer.ProduceAsync(_config.Topic, new Message<Null, string> { Value = messageJson });
                 }
                 catch(ProduceException<Null, string> ex)
                 {

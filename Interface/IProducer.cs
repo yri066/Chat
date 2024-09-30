@@ -2,6 +2,6 @@
 {
     public interface IProducer
     {
-        Task SendMessage(string message);
+        Task SendMessage(Message message);
     }
 }
