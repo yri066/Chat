@@ -1,7 +1,7 @@
 ﻿using Chat.Interface;
+using Hangfire;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Options;
-using System.Text.Json;
 
 namespace Chat.Services.Hubs
 {
@@ -23,11 +23,6 @@ namespace Chat.Services.Hubs
 
         public async Task SendMessage(string userId, string textMessage)
         {
-            await SendMessageToKafka(userId, textMessage);
-        }
-
-        private async Task SendMessageToKafka(string userId, string textMessage)
-        {
             var message = new Message
             {
                 SenderId = _chatConfig.ClientId.ToString(),
@@ -36,6 +31,15 @@ namespace Chat.Services.Hubs
             };
 
             await _producer.SendMessage(message);
+        }
+
+        public void SendMessageDelay(string userId, string textMessage, string delay)
+        {
+            if (!int.TryParse(delay, out int delayResult))
+                return;
+
+            string job = BackgroundJob.Schedule(() =>
+                SendMessage(userId, textMessage), TimeSpan.FromSeconds(delayResult));
         }
     }
 }
