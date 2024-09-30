@@ -1,20 +1,25 @@
 ﻿
 using Confluent.Kafka;
 using Microsoft.Extensions.Options;
+using System.Text.Json;
 
 namespace Chat.Services.Kafka
 {
     public class ConsumerHostedService : IHostedService
     {
-        private readonly KafkaConfig _config;
+        private readonly KafkaConfig _kafkaConfig;
+        private readonly ChatConfig _chatConfig;
         private readonly ILogger _logger;
+        private readonly IMessageSubject _messageSubject;
 
         private CancellationTokenSource _cst;
         private Task _runConsumer;
 
-        public ConsumerHostedService(IOptions<KafkaConfig> options, ILogger<ConsumerHostedService> logger)
+        public ConsumerHostedService(IOptions<KafkaConfig> kafka, IOptions<ChatConfig> chat, IMessageSubject messageSubject, ILogger<ConsumerHostedService> logger)
         {
-            _config = options.Value;
+            _kafkaConfig = kafka.Value;
+            _chatConfig = chat.Value;
+            _messageSubject = messageSubject;
             _logger = logger;
         }
 
@@ -36,25 +41,32 @@ namespace Chat.Services.Kafka
             return Task.CompletedTask;
         }
 
-        public void RunConsumer(CancellationToken cancellationToken)
+        public async Task RunConsumer(CancellationToken cancellationToken)
         {
             var config = new ConsumerConfig
             {
-                GroupId = _config.ConsumerGroupId,
-                BootstrapServers = _config.BootstrapServers,
+                GroupId = _kafkaConfig.ConsumerGroupId,
+                BootstrapServers = _kafkaConfig.BootstrapServers,
                 AllowAutoCreateTopics = true,
             };
 
             using (var consumer = new ConsumerBuilder<string, string>(config).Build())
             {
-                consumer.Subscribe(_config.Topic);
+                consumer.Subscribe(_kafkaConfig.Topic);
 
                 while (!cancellationToken.IsCancellationRequested)
                 {
                     try
                     {
-                        var consumerResult = consumer.Consume(cancellationToken);
-                        Console.WriteLine($"Consume message: {consumerResult.Message.Value}");
+                        var consumeResult = consumer.Consume(cancellationToken);
+
+                        var messageJson = consumeResult.Message.Value;
+                        var message = JsonSerializer.Deserialize<Message>(messageJson);
+
+                        if(message != null)
+                        {
+                            await CheckMessageAccess(message);
+                        }
                     }
                     catch (OperationCanceledException)
                     {
@@ -74,6 +86,19 @@ namespace Chat.Services.Kafka
                         _logger.LogError(ex.ToString());
                     }
                 }
+            }
+        }
+
+        private async Task CheckMessageAccess(Message message)
+        {
+            var userId = _chatConfig.ClientId.ToString();
+            var publicChatId = _chatConfig.PublicChatId;
+
+            if (message.SenderId == userId ||
+                message.RecipientId == userId ||
+                message.RecipientId == publicChatId)
+            {
+                await _messageSubject.NotifyObservers(message);
             }
         }
     }

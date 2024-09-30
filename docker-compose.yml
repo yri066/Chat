@@ -57,7 +57,7 @@ services:
       ASPNETCORE_ENVIRONMENT: Development
       ConnectionStrings__DefaultConnection: Host=postgres;Port=5432;Database=mydatabase1;Username=ubuntu;Password=android;
       ConnectionStrings__Hangfire: Host=postgres;Port=5432;Database=Hangfire1;Username=ubuntu;Password=android;Pooling=true;MinPoolSize=0;MaxPoolSize=5;ConnectionLifetime=0;
-      Chat__ClietnId: client1
+      Chat__ClientId: 1
       Chat__PublicChatId: all
       Chat__ChatCount: 3
       Kafka__BootstrapServers: kafka-chat:9092
@@ -79,7 +79,7 @@ services:
       ASPNETCORE_ENVIRONMENT: Development
       ConnectionStrings__DefaultConnection: Host=postgres;Port=5432;Database=mydatabase2;Username=ubuntu;Password=android;
       ConnectionStrings__Hangfire: Host=postgres;Port=5432;Database=Hangfire2;Username=ubuntu;Password=android;Pooling=true;MinPoolSize=0;MaxPoolSize=5;ConnectionLifetime=0;
-      Chat__ClietnId: client2
+      Chat__ClientId: 2
       Chat__PublicChatId: all
       Chat__ChatCount: 3
       Kafka__BootstrapServers: kafka-chat:9092
@@ -101,7 +101,7 @@ services:
       ASPNETCORE_ENVIRONMENT: Development
       ConnectionStrings__DefaultConnection: Host=postgres;Port=5432;Database=mydatabase3;Username=ubuntu;Password=android;
       ConnectionStrings__Hangfire: Host=postgres;Port=5432;Database=Hangfire3;Username=ubuntu;Password=android;Pooling=true;MinPoolSize=0;MaxPoolSize=5;ConnectionLifetime=0;
-      Chat__ClietnId: client3
+      Chat__ClientId: 3
       Chat__PublicChatId: all
       Chat__ChatCount: 3
       Kafka__BootstrapServers: kafka-chat:9092

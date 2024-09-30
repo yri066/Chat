@@ -1,15 +1,17 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.Extensions.Options;
 
 namespace Chat.Pages
 {
     public class IndexModel : PageModel
     {
-        private readonly ILogger<IndexModel> _logger;
+        public readonly List<string> ChatList;
 
-        public IndexModel(ILogger<IndexModel> logger)
+        public IndexModel(IOptions<ChatConfig> option)
         {
-            _logger = logger;
+            var options = option.Value;
+            ChatList = options.ChatList;
         }
 
         public void OnGet()
