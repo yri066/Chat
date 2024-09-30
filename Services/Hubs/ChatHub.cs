@@ -26,11 +26,6 @@ namespace Chat.Services.Hubs
             await SendMessageToKafka(userId, textMessage);
         }
 
-        public async Task PostMessage(string userId, string sender, string textMessage)
-        {
-            await Clients.Group(userId).ReceiveMessage(sender, textMessage);
-        }
-
         private async Task SendMessageToKafka(string userId, string textMessage)
         {
             var message = new Message
