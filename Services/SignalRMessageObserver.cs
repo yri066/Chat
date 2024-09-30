@@ -25,7 +25,7 @@ namespace Chat.Services
 
             if (message.RecipientId == userId)
             {
-                await SendMessage(message.SenderId, message.RecipientId, message.Text);
+                await SendMessage(message.SenderId, message.SenderId, message.Text);
             }
             else if(message.SenderId == userId ||
                     message.RecipientId == _config.PublicChatId)
