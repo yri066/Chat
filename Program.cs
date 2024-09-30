@@ -4,6 +4,7 @@ using Chat.Services.Hubs;
 using Chat.Services.Kafka;
 using Hangfire;
 using Hangfire.PostgreSql;
+using Microsoft.EntityFrameworkCore;
 
 namespace Chat
 {
@@ -16,6 +17,9 @@ namespace Chat
             builder.Services.Configure<KafkaConfig>(builder.Configuration.GetSection(KafkaConfig.Position));
             builder.Services.Configure<ChatConfig>(builder.Configuration.GetSection(ChatConfig.Position));
             builder.Services.AddSignalR();
+
+            builder.Services.AddDbContext<ApplicationDbContext>(options =>
+                options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 
             builder.Services.AddHangfire(h =>
             {
@@ -31,19 +35,19 @@ namespace Chat
 
             builder.Services.AddSingleton<IProducer, Producer>();
             builder.Services.AddSingleton<SignalRMessageObserver>();
-            
+
             builder.Services.AddSingleton<IMessageSubject, MessageSubject>(serviceProvider =>
             {
                 var messageSubject = new MessageSubject();
-            
+
                 var signalRObserver = serviceProvider.GetRequiredService<SignalRMessageObserver>();
-            
+
                 messageSubject.Attach(signalRObserver);
-            
+
                 return messageSubject;
             });
-            
-            
+
+
             builder.Services.AddHostedService<ConsumerHostedService>();
 
             builder.Services.AddControllers();
