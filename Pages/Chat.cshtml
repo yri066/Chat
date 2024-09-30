@@ -90,8 +90,17 @@
     document.getElementById("sendButton").onclick = function () {
         var userId = "@Model.ChatId";
         var message = document.getElementById("messageInput").value.trim();
+
         if (message) {
-            connection.invoke("SendMessage", userId, message).catch(err => console.error(err.toString()));
+            var delay = document.getElementById("valueSlider").value;
+
+            if(delay == 0) {
+                connection.invoke("SendMessage", userId, message).catch(err => console.error(err.toString()));
+            }
+            else {
+                connection.invoke("SendMessageDelay", userId, message, delay).catch(err => console.error(err.toString()));
+            }
+
             document.getElementById("messageInput").value = "";
         }
     };
