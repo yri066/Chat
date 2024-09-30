@@ -1,3 +1,4 @@
+using Chat.Services;
 using Chat.Services.Hubs;
 using Chat.Services.Kafka;
 
@@ -14,6 +15,20 @@ namespace Chat
             builder.Services.AddSignalR();
 
             builder.Services.AddSingleton<IProducer, Producer>();
+            builder.Services.AddSingleton<SignalRMessageObserver>();
+            
+            builder.Services.AddSingleton<IMessageSubject, MessageSubject>(serviceProvider =>
+            {
+                var messageSubject = new MessageSubject();
+            
+                var signalRObserver = serviceProvider.GetRequiredService<SignalRMessageObserver>();
+            
+                messageSubject.Attach(signalRObserver);
+            
+                return messageSubject;
+            });
+            
+            
             builder.Services.AddHostedService<ConsumerHostedService>();
 
             builder.Services.AddControllers();
