@@ -35,14 +35,17 @@ namespace Chat
 
             builder.Services.AddSingleton<IProducer, Producer>();
             builder.Services.AddSingleton<SignalRMessageObserver>();
+            builder.Services.AddSingleton<DatabaseMessageObserver>();
 
             builder.Services.AddSingleton<IMessageSubject, MessageSubject>(serviceProvider =>
             {
                 var messageSubject = new MessageSubject();
 
                 var signalRObserver = serviceProvider.GetRequiredService<SignalRMessageObserver>();
+                var databaseObserver = serviceProvider.GetRequiredService<DatabaseMessageObserver>();
 
                 messageSubject.Attach(signalRObserver);
+                messageSubject.Attach(databaseObserver);
 
                 return messageSubject;
             });
