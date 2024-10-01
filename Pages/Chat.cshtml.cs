@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 
 namespace Chat.Pages
@@ -7,10 +8,14 @@ namespace Chat.Pages
     public class ChatModel : PageModel
     {
         private ChatConfig _config;
+        private readonly ApplicationDbContext _context;
         public string ChatId = string.Empty;
 
-        public ChatModel(IOptions<ChatConfig> options)
+        public List<Message> Messages { get; private set; } = new();
+
+        public ChatModel(ApplicationDbContext context, IOptions<ChatConfig> options)
         {
+            _context = context;
             _config = options.Value;
         }
 
@@ -22,6 +27,12 @@ namespace Chat.Pages
             {
                 return NotFound();
             }
+
+            var userId = _config.ClientId.ToString();
+            Messages = _context.Messages.Where(x => x.RecipientId == chatId ||
+                                                    x.RecipientId == userId && x.SenderId == chatId)
+                .AsNoTracking()
+                .ToList();
 
             return Page();
         }

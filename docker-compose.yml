@@ -13,11 +13,16 @@ services:
   kafka-chat:
     image: confluentinc/cp-kafka:latest
     container_name: kafka-chat
+    healthcheck:
+        test: nc -z localhost 9092 || exit -1
+        start_period: 15s
+        interval: 5s
+        timeout: 10s
+        retries: 10
     environment:
-      KAFKA_KRAFT_MODE: 'true'
       KAFKA_NODE_ID: 1
       KAFKA_PROCESS_ROLES: broker,controller
-      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@localhost:9093
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka-chat:9093
       KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092,CONTROLLER://0.0.0.0:9093
       KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka-chat:9092
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,CONTROLLER:PLAINTEXT
@@ -66,8 +71,8 @@ services:
     ports:
       - "7000:8080"
     depends_on:
-      - postgres
-      - kafka-chat
+      kafka-chat:
+        condition: service_healthy
 
   app2:
     build:
@@ -88,8 +93,8 @@ services:
     ports:
       - "8000:8080"
     depends_on:
-      - postgres
-      - kafka-chat
+      kafka-chat:
+        condition: service_healthy
       
   app3:
     build:
@@ -110,8 +115,8 @@ services:
     ports:
       - "9000:8080"
     depends_on:
-      - postgres
-      - kafka-chat
+      kafka-chat:
+        condition: service_healthy
 
 volumes:
   postgres-data:
