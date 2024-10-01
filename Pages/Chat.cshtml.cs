@@ -19,7 +19,7 @@ namespace Chat.Pages
             _config = options.Value;
         }
 
-        public IActionResult OnGet(string chatId)
+        public async Task<IActionResult> OnGet(string chatId)
         {
             ChatId = chatId;
 
@@ -29,10 +29,10 @@ namespace Chat.Pages
             }
 
             var userId = _config.ClientId.ToString();
-            Messages = _context.Messages.Where(x => x.RecipientId == chatId ||
+            Messages = await _context.Messages.Where(x => x.RecipientId == chatId ||
                                                     x.RecipientId == userId && x.SenderId == chatId)
                 .AsNoTracking()
-                .ToList();
+                .ToListAsync();
 
             return Page();
         }
