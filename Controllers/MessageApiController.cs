@@ -5,6 +5,9 @@ using Microsoft.Extensions.Options;
 
 namespace Chat.Controllers
 {
+    /// <summary>
+    /// Api сообщений
+    /// </summary>
     [ApiController]
     [Route("api/[action]")]
     public class MessageApiController : ControllerBase
@@ -20,12 +23,21 @@ namespace Chat.Controllers
             _chatConfig = options.Value;
         }
 
+        /// <summary>
+        /// Получить все сообщения.
+        /// </summary>
+        /// <returns>Список сообщений.</returns>
         [HttpGet]
         public List<Message> GetAllMessages()
         {
             return _context.Messages.AsNoTracking().ToList();
         }
 
+        /// <summary>
+        /// Получить все сообщения с пользователем.
+        /// </summary>
+        /// <param name="userId">Id пользователя.</param>
+        /// <returns>Список сообщений.</returns>
         [HttpGet]
         public async Task<ActionResult> GetMessagesWithUser(string userId)
         {
@@ -43,6 +55,10 @@ namespace Chat.Controllers
             return Ok(list);
         }
 
+        /// <summary>
+        /// Получить входящие сообщения.
+        /// </summary>
+        /// <returns>Список сообщений.</returns>
         [HttpGet]
         public async Task<List<Message>> GetIncomingMessages()
         {
@@ -54,6 +70,10 @@ namespace Chat.Controllers
             return list;
         }
 
+        /// <summary>
+        /// Получить отправленные сообщения.
+        /// </summary>
+        /// <returns>Список сообщений.</returns>
         [HttpGet]
         public async Task<List<Message>> GetSentMessages()
         {
@@ -65,12 +85,21 @@ namespace Chat.Controllers
             return list;
         }
 
+        /// <summary>
+        /// Отправить сообщение всем.
+        /// </summary>
+        /// <param name="messageText">Текст сообщения.</param>
         [HttpPost]
         public async Task SendMessageToAll(string messageText)
         {
             await SendMessage(_chatConfig.PublicChatId, messageText);
         }
 
+        /// <summary>
+        /// ОТправить сообщение пользователю.
+        /// </summary>
+        /// <param name="userId">Id пользователя.</param>
+        /// <param name="messageText">Текст сообщения.</param>
         [HttpPost]
         public async Task<ActionResult> SendMessageToUser(string userId,string messageText)
         {
@@ -84,6 +113,11 @@ namespace Chat.Controllers
             return Ok();
         }
 
+        /// <summary>
+        /// Отправить сообщение.
+        /// </summary>
+        /// <param name="userId">Id пользователя.</param>
+        /// <param name="textMessage">Текст сообщения.</param>
         private async Task SendMessage(string userId, string textMessage)
         {
             var message = new Message

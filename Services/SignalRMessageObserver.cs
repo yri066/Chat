@@ -8,6 +8,9 @@ using System.Text.RegularExpressions;
 
 namespace Chat.Services
 {
+    /// <summary>
+    /// Отправка сообщений в SignalR.
+    /// </summary>
     public class SignalRMessageObserver : IMessageObserver
     {
         private readonly IHubContext<ChatHub> _hubContext;
@@ -19,6 +22,10 @@ namespace Chat.Services
             _config = options.Value;
         }
 
+        /// <summary>
+        /// Отправка сообщений в SignalR.
+        /// </summary>
+        /// <param name="message">Сообщение.</param>
         public async Task Notify(Message message)
         {
             var userId = _config.ClientId.ToString();

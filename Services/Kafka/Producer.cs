@@ -4,6 +4,9 @@ using System.Text.Json;
 
 namespace Chat.Services.Kafka
 {
+    /// <summary>
+    /// Kafka Producer.
+    /// </summary>
     public class Producer : IProducer
     {
         private readonly KafkaConfig _config;
@@ -14,6 +17,10 @@ namespace Chat.Services.Kafka
             _logger = logger;
         }
 
+        /// <summary>
+        /// Отправить сообщение в Kafka.
+        /// </summary>
+        /// <param name="message">Сообщение.</param>
         public async Task SendMessage(Message message)
         {
             var config = new ProducerConfig

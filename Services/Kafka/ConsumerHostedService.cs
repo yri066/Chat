@@ -5,6 +5,9 @@ using System.Text.Json;
 
 namespace Chat.Services.Kafka
 {
+    /// <summary>
+    /// Kafka Consumer.
+    /// </summary>
     public class ConsumerHostedService : IHostedService
     {
         private readonly KafkaConfig _kafkaConfig;
@@ -41,6 +44,10 @@ namespace Chat.Services.Kafka
             return Task.CompletedTask;
         }
 
+        /// <summary>
+        /// Получение сообщений из Kafka.
+        /// </summary>
+        /// <param name="cancellationToken">Токен отмены.</param>
         public async Task RunConsumer(CancellationToken cancellationToken)
         {
             var config = new ConsumerConfig
@@ -94,6 +101,10 @@ namespace Chat.Services.Kafka
             }
         }
 
+        /// <summary>
+        /// Уведомляет наблюдателей о доступном сообщении.
+        /// </summary>
+        /// <param name="message">Сообщение.</param>
         private async Task CheckMessageAccess(Message message)
         {
             var userId = _chatConfig.ClientId.ToString();
