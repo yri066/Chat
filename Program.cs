@@ -4,6 +4,7 @@ using Chat.Services.Hubs;
 using Chat.Services.Kafka;
 using Hangfire;
 using Hangfire.PostgreSql;
+using Microsoft.EntityFrameworkCore;
 
 namespace Chat
 {
@@ -16,6 +17,11 @@ namespace Chat
             builder.Services.Configure<KafkaConfig>(builder.Configuration.GetSection(KafkaConfig.Position));
             builder.Services.Configure<ChatConfig>(builder.Configuration.GetSection(ChatConfig.Position));
             builder.Services.AddSignalR();
+
+            builder.Services.AddDbContext<ApplicationDbContext>(options =>
+                options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
+
+            AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
 
             builder.Services.AddHangfire(h =>
             {
@@ -31,19 +37,22 @@ namespace Chat
 
             builder.Services.AddSingleton<IProducer, Producer>();
             builder.Services.AddSingleton<SignalRMessageObserver>();
-            
+            builder.Services.AddSingleton<DatabaseMessageObserver>();
+
             builder.Services.AddSingleton<IMessageSubject, MessageSubject>(serviceProvider =>
             {
                 var messageSubject = new MessageSubject();
-            
+
                 var signalRObserver = serviceProvider.GetRequiredService<SignalRMessageObserver>();
-            
+                var databaseObserver = serviceProvider.GetRequiredService<DatabaseMessageObserver>();
+
                 messageSubject.Attach(signalRObserver);
-            
+                messageSubject.Attach(databaseObserver);
+
                 return messageSubject;
             });
-            
-            
+
+
             builder.Services.AddHostedService<ConsumerHostedService>();
 
             builder.Services.AddControllers();
@@ -53,12 +62,18 @@ namespace Chat
             // Add services to the container.
             builder.Services.AddRazorPages();
 
+            var app = builder.Build();
+
             using (var connect = new HangfireDbContext(builder.Configuration.GetConnectionString("Hangfire")))
             {
                 connect.Database.EnsureCreated();
             }
 
-            var app = builder.Build();
+            using (var scope = app.Services.CreateScope())
+            {
+                var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+                db.Database.Migrate();
+            }
 
             if (app.Environment.IsDevelopment())
             {

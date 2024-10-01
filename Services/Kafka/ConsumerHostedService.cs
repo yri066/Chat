@@ -60,6 +60,11 @@ namespace Chat.Services.Kafka
                     {
                         var consumeResult = consumer.Consume(cancellationToken);
 
+                        if (consumeResult is null)
+                        {
+                            continue;
+                        }
+
                         var messageJson = consumeResult.Message.Value;
                         var message = JsonSerializer.Deserialize<Message>(messageJson);
 

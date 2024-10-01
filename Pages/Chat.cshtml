@@ -42,6 +42,10 @@
 
     <!-- Область сообщений чата -->
     <div id="messageList" class="p-3">
+        @foreach(var item in Model.Messages)
+        {
+            <div class="border-bottom p-2"><strong>@item.SenderId:</strong> @item.Text</div>
+        }
     </div>
 
     <div class="input-area">
@@ -59,6 +63,8 @@
 
 <script src="~/js/microsoft/signalr/dist/browser/signalr.js"></script>
 <script>
+    const messageList = document.getElementById("messageList");
+    messageList.scrollTop = messageList.scrollHeight;
 
     const connection = new signalR.HubConnectionBuilder()
         .withUrl(document.location.origin + "/chat")
@@ -74,8 +80,6 @@
 
     // Обработка сообщений, полученных от сервера
     connection.on("ReceiveMessage", (user, message) => {
-        const messageList = document.getElementById("messageList");
-
         // Создать новый элемент сообщения
         const msgElement = document.createElement("div");
         msgElement.classList.add("border-bottom", "p-2");
