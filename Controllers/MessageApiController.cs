@@ -39,7 +39,7 @@ namespace Chat.Controllers
         /// <param name="userId">Id пользователя.</param>
         /// <returns>Список сообщений.</returns>
         [HttpGet]
-        public async Task<ActionResult> GetMessagesWithUser(string userId)
+        public async Task<ActionResult> GetAllMessagesWithUser(string userId)
         {
             if (!_chatConfig.ChatList.Contains(userId))
             {
