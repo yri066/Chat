@@ -16,7 +16,7 @@ services:
     healthcheck:
         test: nc -z localhost 9092 || exit -1
         start_period: 15s
-        interval: 5s
+        interval: 10s
         timeout: 10s
         retries: 10
     environment:
@@ -51,6 +51,20 @@ services:
         CLUSTER_ID=$(/usr/bin/kafka-storage random-uuid)
         /usr/bin/kafka-storage format --ignore-formatted --cluster-id $CLUSTER_ID --config /etc/kafka/kraft/server.properties
         /etc/confluent/docker/run  # Start the Kafka broker
+
+  kafka-init:
+    image: confluentinc/cp-kafka:latest
+    depends_on:
+      kafka-chat:
+        condition: service_healthy
+    entrypoint:
+      - /bin/sh
+      - -c
+      - |
+        # Wait for Kafka to be ready
+        cub kafka-ready -b kafka-chat:9092 1 10 && \
+        # Create topics after Kafka is ready
+        kafka-topics --create --topic chat-topic --bootstrap-server kafka-chat:9092 --replication-factor 5 --partitions 5
 
   app1:
     build:
