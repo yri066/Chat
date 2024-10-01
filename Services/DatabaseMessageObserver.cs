@@ -2,6 +2,9 @@
 
 namespace Chat.Services
 {
+    /// <summary>
+    /// Сохранение сообщения в бд.
+    /// </summary>
     public class DatabaseMessageObserver : IMessageObserver
     {
         private readonly IServiceProvider _provider;
@@ -10,6 +13,10 @@ namespace Chat.Services
             _provider = provider;
         }
 
+        /// <summary>
+        /// Сохранение сообщения в бд.
+        /// </summary>
+        /// <param name="message">Сообщение.</param>
         public async Task Notify(Message message)
         {
             using (IServiceScope scope = _provider.CreateScope())
