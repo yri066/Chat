@@ -46,9 +46,9 @@ namespace Chat.Controllers
                 return NotFound();
             }
 
-            var currengId = _chatConfig.ClientId.ToString();
+            var currentId = _chatConfig.ClientId.ToString();
             var list = await _context.Messages.Where(x => x.RecipientId == userId ||
-                                                    x.RecipientId == currengId && x.SenderId == userId)
+                                                    x.RecipientId == currentId && x.SenderId == userId)
                 .AsNoTracking()
                 .ToListAsync();
 
@@ -62,8 +62,8 @@ namespace Chat.Controllers
         [HttpGet]
         public async Task<List<Message>> GetIncomingMessages()
         {
-            var currengId = _chatConfig.ClientId.ToString();
-            var list = await _context.Messages.Where(x => x.RecipientId == currengId)
+            var currentId = _chatConfig.ClientId.ToString();
+            var list = await _context.Messages.Where(x => x.RecipientId == currentId)
                 .AsNoTracking()
                 .ToListAsync();
 
@@ -77,8 +77,8 @@ namespace Chat.Controllers
         [HttpGet]
         public async Task<List<Message>> GetSentMessages()
         {
-            var currengId = _chatConfig.ClientId.ToString();
-            var list = await _context.Messages.Where(x => x.SenderId == currengId)
+            var currentId = _chatConfig.ClientId.ToString();
+            var list = await _context.Messages.Where(x => x.SenderId == currentId)
                 .AsNoTracking()
                 .ToListAsync();
 
