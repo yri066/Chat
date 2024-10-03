@@ -1,3 +1,5 @@
+using Chat.ConsoleWorker.Interface;
+using Chat.ConsoleWorker.Workers;
 using Chat.Data;
 using Chat.Interface;
 using Chat.Services;
@@ -14,7 +16,6 @@ namespace Chat
         public static void Main(string[] args)
         {
             var builder = WebApplication.CreateBuilder(args);
-
             builder.Services.Configure<KafkaConfig>(builder.Configuration.GetSection(KafkaConfig.Position));
             builder.Services.Configure<ChatConfig>(builder.Configuration.GetSection(ChatConfig.Position));
             builder.Services.AddSignalR();
@@ -56,6 +57,16 @@ namespace Chat
 
 
             builder.Services.AddHostedService<ConsumerHostedService>();
+
+            //Регистрация обработчика консольного ввода
+            builder.Services.AddTransient<IWorker, GetAllMessages>();
+            builder.Services.AddTransient<IWorker, GetAllMessagesWithUser>();
+            builder.Services.AddTransient<IWorker, GetIncomingMessages>();
+            builder.Services.AddTransient<IWorker, GetSentMessages>();
+            builder.Services.AddTransient<IWorker, SendMessageToAll>();
+            builder.Services.AddTransient<IWorker, SendMessageToUser>();
+
+            builder.Services.AddHostedService<ConsoleWorker.ConsoleWorker>();
 
             builder.Services.AddControllers();
             builder.Services.AddEndpointsApiExplorer();
