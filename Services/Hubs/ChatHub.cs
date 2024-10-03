@@ -12,10 +12,11 @@ namespace Chat.Services.Hubs
     {
         private readonly ChatConfig _chatConfig;
         private readonly IProducer _producer;
-        public ChatHub(IOptions<ChatConfig> options, IProducer producer)
+        private readonly IMessageSend _sendMessage;
+        public ChatHub(IOptions<ChatConfig> options, IMessageSend sendMessage)
         {
             _chatConfig = options.Value;
-            _producer = producer;
+            _sendMessage = sendMessage;
         }
 
         /// <summary>
@@ -43,7 +44,7 @@ namespace Chat.Services.Hubs
                 Text = textMessage
             };
 
-            await _producer.SendMessage(message);
+            await _sendMessage.SendMessage(message);
         }
 
         /// <summary>

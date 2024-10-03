@@ -1,4 +1,5 @@
 using Chat.Data;
+using Chat.Interface;
 using Chat.Services;
 using Chat.Services.Hubs;
 using Chat.Services.Kafka;
@@ -36,6 +37,7 @@ namespace Chat
             builder.Services.AddHangfireServer();
 
             builder.Services.AddSingleton<IProducer, Producer>();
+            builder.Services.AddSingleton<IMessageSend, MessageSend>();
             builder.Services.AddSingleton<SignalRMessageObserver>();
             builder.Services.AddSingleton<DatabaseMessageObserver>();
 
