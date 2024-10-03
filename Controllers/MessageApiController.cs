@@ -1,4 +1,5 @@
-﻿using Confluent.Kafka;
+﻿using Chat.Interface;
+using Confluent.Kafka;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
@@ -13,13 +14,13 @@ namespace Chat.Controllers
     public class MessageApiController : ControllerBase
     {
         private readonly ApplicationDbContext _context;
-        private readonly IProducer _producer;
+        private readonly IMessageSend _sendMessage;
         private readonly ChatConfig _chatConfig;
 
-        public MessageApiController(ApplicationDbContext context, IProducer producer, IOptions<ChatConfig> options)
+        public MessageApiController(ApplicationDbContext context, IMessageSend sendMessage, IOptions<ChatConfig> options)
         {
             _context = context;
-            _producer = producer;
+            _sendMessage = sendMessage;
             _chatConfig = options.Value;
         }
 
@@ -114,20 +115,36 @@ namespace Chat.Controllers
         }
 
         /// <summary>
+        /// ОТправить сообщение пользователю.
+        /// </summary>
+        /// <param name="userId">Id пользователя.</param>
+        /// <param name="messageText">Текст сообщения.</param>
+        [HttpPost]
+        public ActionResult SendMessageDelayToUser(string userId, string messageText, int delay)
+        {
+            if(delay < 0)
+            {
+                return BadRequest();
+            }
+
+            if (!_chatConfig.ChatList.Contains(userId))
+            {
+                return NotFound();
+            }
+
+            _sendMessage.SendMessageDelayTo(userId, messageText, delay);
+
+            return Ok();
+        }
+
+        /// <summary>
         /// Отправить сообщение.
         /// </summary>
         /// <param name="userId">Id пользователя.</param>
         /// <param name="textMessage">Текст сообщения.</param>
         private async Task SendMessage(string userId, string textMessage)
         {
-            var message = new Message
-            {
-                SenderId = _chatConfig.ClientId.ToString(),
-                RecipientId = userId,
-                Text = textMessage
-            };
-
-            await _producer.SendMessage(message);
+            await _sendMessage.SendMessageTo(userId, textMessage);
         }
     }
 }
