@@ -60,6 +60,7 @@ namespace Chat.ConsoleWorker
 
                         if (string.IsNullOrEmpty(act))
                         {
+                            await Task.Delay(2000);
                             continue;
                         }
 
