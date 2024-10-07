@@ -16,64 +16,15 @@ namespace Chat
         public static void Main(string[] args)
         {
             var builder = WebApplication.CreateBuilder(args);
-            builder.Services.Configure<KafkaConfig>(builder.Configuration.GetSection(KafkaConfig.Position));
-            builder.Services.Configure<ChatConfig>(builder.Configuration.GetSection(ChatConfig.Position));
-            builder.Services.AddSignalR();
 
-            builder.Services.AddDbContext<ApplicationDbContext>(options =>
-                options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
-
-            AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
-
-            builder.Services.AddHangfire(h =>
-            {
-                h.UsePostgreSqlStorage(conf =>
-                conf.UseNpgsqlConnection(builder.Configuration.GetConnectionString("Hangfire")));
-            });
-            builder.Services.AddHangfireServer(options =>
-            {
-                options.WorkerCount = 5;
-                options.SchedulePollingInterval = TimeSpan.FromSeconds(1);
-            });
-            builder.Services.AddHangfireServer();
-
-            builder.Services.AddSingleton<IProducer, Producer>();
-            builder.Services.AddSingleton<IMessageSend, MessageSend>();
-            builder.Services.AddSingleton<SignalRMessageObserver>();
-            builder.Services.AddSingleton<DatabaseMessageObserver>();
-
-            builder.Services.AddSingleton<IMessageSubject, MessageSubject>(serviceProvider =>
-            {
-                var messageSubject = new MessageSubject();
-
-                var signalRObserver = serviceProvider.GetRequiredService<SignalRMessageObserver>();
-                var databaseObserver = serviceProvider.GetRequiredService<DatabaseMessageObserver>();
-
-                messageSubject.Attach(signalRObserver);
-                messageSubject.Attach(databaseObserver);
-
-                return messageSubject;
-            });
-
-
-            builder.Services.AddHostedService<ConsumerHostedService>();
-
-            //Регистрация обработчика консольного ввода
-            builder.Services.AddTransient<IWorker, GetAllMessages>();
-            builder.Services.AddTransient<IWorker, GetAllMessagesWithUser>();
-            builder.Services.AddTransient<IWorker, GetIncomingMessages>();
-            builder.Services.AddTransient<IWorker, GetSentMessages>();
-            builder.Services.AddTransient<IWorker, SendMessageToAll>();
-            builder.Services.AddTransient<IWorker, SendMessageToUser>();
-
-            builder.Services.AddHostedService<ConsoleWorker.ConsoleWorker>();
-
-            builder.Services.AddControllers();
-            builder.Services.AddEndpointsApiExplorer();
-            builder.Services.AddSwaggerGen();
-
-            // Add services to the container.
-            builder.Services.AddRazorPages();
+            builder.Services.AddConfigs(builder.Configuration)
+                    .AddKafkaServices(builder.Configuration)
+                    .AddDatabaseNpgsql(builder.Configuration)
+                    .AddHangfireServices(builder.Configuration)
+                    .AddMessageObservers()
+                    .AddConsoleWorkers()
+                    .AddSwagger()
+                    .AddDifferentServices();
 
             var app = builder.Build();
 
@@ -104,14 +55,10 @@ namespace Chat
 
             app.UseHttpsRedirection();
             app.UseStaticFiles();
-
             app.UseRouting();
-
             app.UseHangfireDashboard("/Hang");
             app.MapHub<ChatHub>("/Chat");
-
             app.UseAuthorization();
-
             app.MapControllers();
             app.MapRazorPages();
 
