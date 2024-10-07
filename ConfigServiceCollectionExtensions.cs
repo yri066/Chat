@@ -46,7 +46,7 @@ namespace Chat
         /// <param name="services">Коллекция служб.</param>
         /// <param name="configuration">Конфигурация приложения.</param>
         /// <returns>Коллекция служб.</returns>
-        public static IServiceCollection AddDatabaseNpgsql(this IServiceCollection services, IConfiguration configuration)
+        public static IServiceCollection AddDatabase(this IServiceCollection services, IConfiguration configuration)
         {
             services.AddDbContext<ApplicationDbContext>(options =>
                 options.UseNpgsql(configuration.GetConnectionString("DefaultConnection")));

@@ -19,7 +19,7 @@ namespace Chat
 
             builder.Services.AddConfigs(builder.Configuration)
                     .AddKafkaServices(builder.Configuration)
-                    .AddDatabaseNpgsql(builder.Configuration)
+                    .AddDatabase(builder.Configuration)
                     .AddHangfireServices(builder.Configuration)
                     .AddMessageObservers()
                     .AddConsoleWorkers()
