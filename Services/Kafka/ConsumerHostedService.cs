@@ -54,7 +54,7 @@ namespace Chat.Services.Kafka
             {
                 GroupId = _kafkaConfig.ConsumerGroupId,
                 BootstrapServers = _kafkaConfig.BootstrapServers,
-                AutoOffsetReset = AutoOffsetReset.Latest,
+                AutoOffsetReset = AutoOffsetReset.Earliest,
             };
 
             using (var consumer = new ConsumerBuilder<string, string>(config).Build())
