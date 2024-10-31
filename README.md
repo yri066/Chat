@@ -5,14 +5,19 @@
 
 Команда для запуска `docker compose up`
 
-Будет запущено 3 экземпляра приложения, Postgresql и Kafka
+Будет запущено 3 экземпляра приложения, Postgresql, Kafka и Redpanda Console UI
 
 Приложения используют следующие адреса:
 
-`http://localhost:7000`
-`http://localhost:8000`
-`http://localhost:9000`
+Клиент 1 [http://localhost:7000](http://localhost:7000)
+
+Клиент 2 [http://localhost:8000](http://localhost:8000)
+
+Клиент 3 [http://localhost:9000](http://localhost:9000)
+
+
+Веб-интерфейс Redpanda Console [http://localhost:8080](http://localhost:8080/topics)
 
 Имеется возможность взаимодействия через консоль.
 
-PS: после запуска, потребуется некоторое время для ребалансировки, после которой потребители начнут читать сообщения.
+
