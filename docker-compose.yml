@@ -1,136 +1,155 @@
+
+x-chat: &chat
+    environment: &chat-env
+        ASPNETCORE_ENVIRONMENT: Development
+        Chat__PublicChatId: all
+        Chat__ChatCount: 3
+        Kafka__BootstrapServers: kafka-chat-1:9092
+        Kafka__Topic: chat-topic
+    build: &chat-build
+        context: .
+        dockerfile: Dockerfile.app
+    depends_on:
+        - kafka-chat-1
+        - kafka-chat-2
+        - kafka-chat-3
+        - postgres
+
+x-kafka: &kafka
+    build: &kafka-build
+        context: .
+        dockerfile: Dockerfile.kafka
+        args:
+            JMX_JAVAAGENT_VERSION: "${JMX_JAVAAGENT_VERSION}"
+    environment: &kafka-env
+        HOME: /opt/bitnami/kafka
+        KAFKA_CFG_ZOOKEEPER_CONNECT: "zookeeper:2181"
+        KAFKA_ENABLE_KRAFT: "no"
+        KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP: "CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT"
+        ALLOW_PLAINTEXT_LISTENER: "yes"
+    depends_on:
+        - zookeeper
+
+x-zookeeper: &zookeeper
+    image: docker.io/bitnami/zookeeper:${ZK_VERSION}
+    volumes:
+        - "zookeeper:/bitnami"
+    environment:
+        ALLOW_ANONYMOUS_LOGIN: "yes"
+
+
+x-redpanda-console: &redpanda-console
+    image: docker.redpanda.com/vectorized/console:v2.1.1
+    entrypoint: /bin/sh
+    command: -c 'echo "$$CONSOLE_CONFIG_FILE" > /tmp/config.yml; /app/console'
+    environment: 
+        CONFIG_FILEPATH: /tmp/config.yml
+        CONSOLE_CONFIG_FILE: |
+          kafka:
+            brokers: ["kafka-chat-1:9092", "kafka-chat-2:9092", "kafka-chat-3:9092"]
+            schemaRegistry:
+              enabled: false
+              urls: ["http://redpanda-0:8081"]
+    ports:
+        - 8080:8080
+    depends_on:
+        - kafka-chat-1
+
+##############################################
+
 services:
-  postgres:
-    image: postgres:15
-    container_name: postgres
-    environment:
-      POSTGRES_USER: ubuntu
-      POSTGRES_PASSWORD: android
-    ports:
-      - "5432:5432"
-    volumes:
-      - postgres-data:/var/lib/postgresql/data
+    postgres:
+        image: postgres:15
+        container_name: postgres
+        environment:
+            POSTGRES_USER: ubuntu
+            POSTGRES_PASSWORD: android
+        ports:
+            - "5432:5432"
+        volumes:
+            - postgres-data:/var/lib/postgresql/data
 
-  kafka-chat:
-    image: confluentinc/cp-kafka:latest
-    container_name: kafka-chat
-    healthcheck:
-        test: nc -z localhost 9092 || exit -1
-        start_period: 15s
-        interval: 10s
-        timeout: 10s
-        retries: 10
-    environment:
-      KAFKA_NODE_ID: 1
-      KAFKA_PROCESS_ROLES: broker,controller
-      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka-chat:9093
-      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092,CONTROLLER://0.0.0.0:9093
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka-chat:9092
-      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,CONTROLLER:PLAINTEXT
-      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
-      KAFKA_LOG_DIRS: /var/lib/kafka/data
-      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
-      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
-      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
-      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
-      KAFKA_MIN_INSYNC_REPLICAS: 1
-      KAFKA_AUTO_CREATE_TOPICS_ENABLE: 'true'
-      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
-    volumes:
-      - ./kafka:/var/lib/kafka/data
-    ports:
-      - "9092:9092"
-      - "9093:9093"
-    command:
-      - sh
-      - -c
-      - |
-        if [ -f /var/lib/kafka/data/meta.properties ];
-        then
-          rm /var/lib/kafka/data/meta.properties
-        fi
-        CLUSTER_ID=$(/usr/bin/kafka-storage random-uuid)
-        /usr/bin/kafka-storage format --ignore-formatted --cluster-id $CLUSTER_ID --config /etc/kafka/kraft/server.properties
-        /etc/confluent/docker/run  # Start the Kafka broker
+    chat-1:
+        <<: *chat
+        container_name: chat-1
+        environment:
+            <<: *chat-env
+            ConnectionStrings__DefaultConnection: Host=postgres;Port=5432;Database=mydatabase1;Username=ubuntu;Password=android;
+            ConnectionStrings__Hangfire: Host=postgres;Port=5432;Database=Hangfire1;Username=ubuntu;Password=android;Pooling=true;MinPoolSize=0;MaxPoolSize=5;ConnectionLifetime=0;
+            Chat__ClientId: 1
+            Kafka__ConsumerGroupId: group1
+        ports:
+            - "7000:8080"
 
-  kafka-init:
-    image: confluentinc/cp-kafka:latest
-    depends_on:
-      kafka-chat:
-        condition: service_healthy
-    entrypoint:
-      - /bin/sh
-      - -c
-      - |
-        # Wait for Kafka to be ready
-        cub kafka-ready -b kafka-chat:9092 1 10 && \
-        # Create topics after Kafka is ready
-        kafka-topics --create --topic chat-topic --bootstrap-server kafka-chat:9092 --replication-factor 5 --partitions 5
+    chat-2:
+        <<: *chat
+        container_name: chat-2
+        environment:
+            <<: *chat-env
+            ConnectionStrings__DefaultConnection: Host=postgres;Port=5432;Database=mydatabase2;Username=ubuntu;Password=android;
+            ConnectionStrings__Hangfire: Host=postgres;Port=5432;Database=Hangfire2;Username=ubuntu;Password=android;Pooling=true;MinPoolSize=0;MaxPoolSize=5;ConnectionLifetime=0;
+            Chat__ClientId: 2
+            Kafka__ConsumerGroupId: group2
+        ports:
+            - "8000:8080"
 
-  app1:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    image: my-aspnet-app:latest
-    container_name: aspnetcoreapp1
-    environment:
-      ASPNETCORE_ENVIRONMENT: Development
-      ConnectionStrings__DefaultConnection: Host=postgres;Port=5432;Database=mydatabase1;Username=ubuntu;Password=android;
-      ConnectionStrings__Hangfire: Host=postgres;Port=5432;Database=Hangfire1;Username=ubuntu;Password=android;Pooling=true;MinPoolSize=0;MaxPoolSize=5;ConnectionLifetime=0;
-      Chat__ClientId: 1
-      Chat__PublicChatId: all
-      Chat__ChatCount: 3
-      Kafka__BootstrapServers: kafka-chat:9092
-      Kafka__Topic: chat-topic
-      Kafka__ConsumerGroupId: group1
-    ports:
-      - "7000:8080"
-    depends_on:
-      kafka-chat:
-        condition: service_healthy
+    chat-3:
+        <<: *chat
+        container_name: chat-3
+        environment:
+            <<: *chat-env
+            ConnectionStrings__DefaultConnection: Host=postgres;Port=5432;Database=mydatabase3;Username=ubuntu;Password=android;
+            ConnectionStrings__Hangfire: Host=postgres;Port=5432;Database=Hangfire3;Username=ubuntu;Password=android;Pooling=true;MinPoolSize=0;MaxPoolSize=5;ConnectionLifetime=0;
+            Chat__ClientId: 3
+            Kafka__ConsumerGroupId: group3
+        ports:
+            - "9000:8080"
 
-  app2:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    image: my-aspnet-app:latest
-    container_name: aspnetcoreapp2
-    environment:
-      ASPNETCORE_ENVIRONMENT: Development
-      ConnectionStrings__DefaultConnection: Host=postgres;Port=5432;Database=mydatabase2;Username=ubuntu;Password=android;
-      ConnectionStrings__Hangfire: Host=postgres;Port=5432;Database=Hangfire2;Username=ubuntu;Password=android;Pooling=true;MinPoolSize=0;MaxPoolSize=5;ConnectionLifetime=0;
-      Chat__ClientId: 2
-      Chat__PublicChatId: all
-      Chat__ChatCount: 3
-      Kafka__BootstrapServers: kafka-chat:9092
-      Kafka__Topic: chat-topic
-      Kafka__ConsumerGroupId: group2
-    ports:
-      - "8000:8080"
-    depends_on:
-      kafka-chat:
-        condition: service_healthy
-      
-  app3:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    image: my-aspnet-app:latest
-    container_name: aspnetcoreapp3
-    environment:
-      ASPNETCORE_ENVIRONMENT: Development
-      ConnectionStrings__DefaultConnection: Host=postgres;Port=5432;Database=mydatabase3;Username=ubuntu;Password=android;
-      ConnectionStrings__Hangfire: Host=postgres;Port=5432;Database=Hangfire3;Username=ubuntu;Password=android;Pooling=true;MinPoolSize=0;MaxPoolSize=5;ConnectionLifetime=0;
-      Chat__ClientId: 3
-      Chat__PublicChatId: all
-      Chat__ChatCount: 3
-      Kafka__BootstrapServers: kafka-chat:9092
-      Kafka__Topic: chat-topic
-      Kafka__ConsumerGroupId: group3
-    ports:
-      - "9000:8080"
-    depends_on:
-      kafka-chat:
-        condition: service_healthy
+    # Redpanda Console UI
+    ui:
+        <<: *redpanda-console
+        container_name: ui-chat
 
+    kafka-chat-1:
+        <<: *kafka
+        container_name: kafka-chat-1
+        environment:
+            <<: *kafka-env
+            KAFKA_BROKER_ID: 1
+            
+    kafka-chat-2:
+        <<: *kafka
+        container_name: kafka-chat-2
+        environment:
+            <<: *kafka-env
+            KAFKA_BROKER_ID: 2
+            
+    kafka-chat-3:
+        <<: *kafka
+        container_name: kafka-chat-3
+        environment:
+            <<: *kafka-env
+            KAFKA_BROKER_ID: 3
+
+    kafka-init:
+        image: confluentinc/cp-kafka:latest
+        depends_on:
+            - kafka-chat-1
+        entrypoint: [ '/bin/sh', '-c' ]
+        command: |
+            "
+            # blocks until kafka is reachable
+            kafka-topics --bootstrap-server kafka-chat-1:9092 --list
+            # Create topics after Kafka is ready
+            kafka-topics --create --topic chat-topic --bootstrap-server kafka-chat-1:9092 --partitions 6 --replication-factor 3 --config min.insync.replicas=2 --config retention.ms=600000
+            "
+            
+# Zookeeper quorum
+    zookeeper:
+        <<: *zookeeper
+        container_name: zookeeper-chat
+    
 volumes:
   postgres-data:
+  zookeeper:
+    driver: local
