@@ -1,5 +1,6 @@
-﻿using Chat.Interface;
-using Confluent.Kafka;
+﻿using Chat.Domain.Entities;
+using Chat.Domain.Interface;
+using Chat.Infrastructure.Data;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
@@ -132,7 +133,7 @@ namespace Chat.Controllers
                 return NotFound();
             }
 
-            _sendMessage.SendMessageDelayTo(userId, messageText, delay);
+            _sendMessage.SendMessageToDelay(userId, messageText, delay);
 
             return Ok();
         }

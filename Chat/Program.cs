@@ -1,12 +1,8 @@
-using Chat.ConsoleWorker.Interface;
-using Chat.ConsoleWorker.Workers;
-using Chat.Data;
-using Chat.Interface;
-using Chat.Services;
-using Chat.Services.Hubs;
-using Chat.Services.Kafka;
+using Chat.Config;
+using Chat.ConsoleWorker.Config;
+using Chat.Infrastructure.Data;
+using Chat.Infrastructure.SignalR.Hubs;
 using Hangfire;
-using Hangfire.PostgreSql;
 using Microsoft.EntityFrameworkCore;
 
 namespace Chat
@@ -18,17 +14,18 @@ namespace Chat
             var builder = WebApplication.CreateBuilder(args);
 
             builder.Services.AddConfigs(builder.Configuration)
-                    .AddKafkaServices(builder.Configuration)
+                    .AddKafka()
                     .AddDatabase(builder.Configuration)
-                    .AddHangfireServices(builder.Configuration)
+                    .AddHangfire(builder.Configuration)
                     .AddMessageObservers()
-                    .AddConsoleWorkers()
+                    .AddConsoleWorker()
                     .AddSwagger()
                     .AddDifferentServices();
 
             var app = builder.Build();
 
-            using (var connect = new HangfireDbContext(builder.Configuration.GetConnectionString("Hangfire")))
+            var hangfireConnectionString = builder.Configuration.GetConnectionString("Hangfire")?? throw new InvalidOperationException("Connection string \"Hangfire\" not found.");
+            using (var connect = new HangfireDbContext(hangfireConnectionString))
             {
                 connect.Database.EnsureCreated();
             }

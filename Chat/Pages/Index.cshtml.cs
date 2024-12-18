@@ -1,4 +1,4 @@
-using Microsoft.AspNetCore.Mvc;
+using Chat.Domain.Entities;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.Extensions.Options;
 

@@ -1,3 +1,5 @@
+using Chat.Domain.Entities;
+using Chat.Infrastructure.Data;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
@@ -7,7 +9,7 @@ namespace Chat.Pages
 {
     public class ChatModel : PageModel
     {
-        private ChatConfig _config;
+        private readonly ChatConfig _config;
         private readonly ApplicationDbContext _context;
         public string ChatId = string.Empty;
 
