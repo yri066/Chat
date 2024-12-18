@@ -9,8 +9,6 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Chat.Domain", "Chat.Domain\
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Chat.Infrastructure", "Chat.Infrastructure\Chat.Infrastructure.csproj", "{61054795-620C-42AB-9ABE-9A397CE02332}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Infrastructure", "Infrastructure", "{7CD624A5-DBC8-4CE1-A6A9-136F0BADC3E9}"
-EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Chat.ConsoleWorker", "Chat.ConsoleWorker\Chat.ConsoleWorker.csproj", "{A5F61749-2BB5-4F2E-852D-1D79C1FF9825}"
 EndProject
 Global
