@@ -28,10 +28,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Data\Migrations\" />
-  </ItemGroup>
-
-  <ItemGroup>
     <ProjectReference Include="..\Chat.ConsoleWorker\Chat.ConsoleWorker.csproj" />
     <ProjectReference Include="..\Chat.Domain\Chat.Domain.csproj" />
     <ProjectReference Include="..\Chat.Infrastructure\Chat.Infrastructure.csproj" />
