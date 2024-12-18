@@ -1,15 +1,17 @@
-﻿using Chat.ConsoleWorker.Interface;
-using Chat.ConsoleWorker.Workers;
-using Chat.Interface;
-using Chat.Services;
-using Chat.Services.Kafka;
+﻿using Chat.Domain;
+using Chat.Domain.Entities;
+using Chat.Domain.Interface;
+using Chat.Infrastructure.Data;
+using Chat.Infrastructure.Kafka;
+using Chat.Infrastructure.Services;
+using Chat.Infrastructure.SignalR;
 using Hangfire;
 using Hangfire.PostgreSql;
 using Microsoft.EntityFrameworkCore;
 
-namespace Chat
+namespace Chat.Config
 {
-    public static class ConfigServiceCollectionExtensions
+    public static class ServiceCollectionExtensions
     {
         /// <summary>
         /// Настройка конфигурации.
@@ -31,7 +33,7 @@ namespace Chat
         /// <param name="services">Коллекция служб.</param>
         /// <param name="configuration">Конфигурация приложения.</param>
         /// <returns>Коллекция служб.</returns>
-        public static IServiceCollection AddKafkaServices(this IServiceCollection services, IConfiguration configuration)
+        public static IServiceCollection AddKafka(this IServiceCollection services)
         {
             services.AddSingleton<IProducer, Producer>();
             services.AddHostedService<ConsumerHostedService>();
@@ -48,8 +50,10 @@ namespace Chat
         /// <returns>Коллекция служб.</returns>
         public static IServiceCollection AddDatabase(this IServiceCollection services, IConfiguration configuration)
         {
+            var connectionString = configuration.GetConnectionString("DefaultConnection") ?? throw new InvalidOperationException("Connection string \"DefaultConnection\" not found.");
+            
             services.AddDbContext<ApplicationDbContext>(options =>
-                options.UseNpgsql(configuration.GetConnectionString("DefaultConnection")));
+                options.UseNpgsql(connectionString));
 
             AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
 
@@ -62,7 +66,7 @@ namespace Chat
         /// <param name="services">Коллекция служб.</param>
         /// <param name="configuration">Конфигурация приложения.</param>
         /// <returns>Коллекция служб.</returns>
-        public static IServiceCollection AddHangfireServices(this IServiceCollection services, IConfiguration configuration)
+        public static IServiceCollection AddHangfire(this IServiceCollection services, IConfiguration configuration)
         {
             services.AddHangfire(h =>
             {
@@ -105,32 +109,12 @@ namespace Chat
         }
 
         /// <summary>
-        /// Регистрирует обработчиков консольных действий.
-        /// <param name="services">Коллекция служб.</param>
-        /// <returns>Коллекция служб.</returns>
-        public static IServiceCollection AddConsoleWorkers(this IServiceCollection services)
-        {
-            services.AddTransient<IWorker, GetAllMessages>();
-            services.AddTransient<IWorker, GetAllMessagesWithUser>();
-            services.AddTransient<IWorker, GetIncomingMessages>();
-            services.AddTransient<IWorker, GetSentMessages>();
-            services.AddTransient<IWorker, SendMessageToAll>();
-            services.AddTransient<IWorker, SendMessageToUser>();
-
-            services.AddHostedService<ConsoleWorker.ConsoleWorker>();
-
-            return services;
-        }
-
-        /// <summary>
         /// Регистрирует Swagger.
         /// <param name="services">Коллекция служб.</param>
         /// <returns>Коллекция служб.</returns>
         public static IServiceCollection AddSwagger(this IServiceCollection services)
         {
-            services.AddSwaggerGen();
-
-            return services;
+            return services.AddSwaggerGen();
         }
 
         /// <summary>
