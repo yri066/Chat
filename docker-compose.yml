@@ -1,4 +1,3 @@
-
 x-chat: &chat
     environment: &chat-env
         ASPNETCORE_ENVIRONMENT: Development
@@ -28,7 +27,8 @@ x-kafka: &kafka
         KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP: "CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT"
         ALLOW_PLAINTEXT_LISTENER: "yes"
     depends_on:
-        - zookeeper
+        zookeeper:
+            condition: service_healthy
 
 x-zookeeper: &zookeeper
     image: docker.io/bitnami/zookeeper:${ZK_VERSION}
@@ -135,6 +135,9 @@ services:
         image: confluentinc/cp-kafka:latest
         depends_on:
             - kafka-chat-1
+            - kafka-chat-2
+            - kafka-chat-3
+            - zookeeper
         entrypoint: [ '/bin/sh', '-c' ]
         command: |
             "
@@ -148,6 +151,11 @@ services:
     zookeeper:
         <<: *zookeeper
         container_name: zookeeper-chat
+        healthcheck:
+            test: ["CMD", "echo", "ruok", "|", "nc", "localhost", "2181"]
+            interval: 10s
+            timeout: 5s
+            retries: 5
     
 volumes:
   postgres-data:
